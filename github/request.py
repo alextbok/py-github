@@ -23,14 +23,39 @@ class Request():
 		url = GITHUB_API_BASE_URL + url_remainder
 		return requests.get(url, auth=auth) if auth else requests.get(url)
 
+	'''
+	GET (with params)
+	Memoized so repeated requests with the same arguments don't eat away at our precious rate-limit
+	'''
+	@staticmethod
+	@memoized.Memoized
+	def get_with_params(url_remainder, params, auth=None):
+		url = GITHUB_API_BASE_URL + url_remainder
+		return requests.get(url, params=params, auth=auth) if auth else requests.get(url, params=params)
+
+
+	'''
+	POST
+	'''
 	@staticmethod
 	def post(url_remainder, data, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.post(url, data=json.dumps(data), auth=auth) if auth else requests.post(url, data=data)
+		return requests.post(url, data=json.dumps(data), auth=auth) if auth else requests.post(url, data=json.dumps(data) )
 
+	'''
+	PATCH
+	'''
 	@staticmethod
 	def patch(url_remainder, data, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.post(url, data=json.dumps(data), auth=auth) if auth else requests.post(url, data=data)
+		return requests.post(url, data=json.dumps(data), auth=auth) if auth else requests.post(url, data=json.dumps(data) )
+
+	'''
+	DELETE
+	'''
+	@staticmethod
+	def delete(url_remainder, auth=None):
+		url = GITHUB_API_BASE_URL + url_remainder
+		return requests.post(url, auth=auth) if auth else requests.post(url)
 
 
