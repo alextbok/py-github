@@ -58,4 +58,23 @@ class Request():
 		url = GITHUB_API_BASE_URL + url_remainder
 		return requests.post(url, auth=auth) if auth else requests.post(url)
 
+	'''
+	PUT
+	'''
+	@staticmethod
+	def put(url_remainder, data=None, auth=None):
+		url = GITHUB_API_BASE_URL + url_remainder
+		return requests.put(url, data=json.dumps(data), auth=auth) if auth else requests.post(url, data=json.dumps(data))
+
+
+
+
+
+
+
+
+
+
+
+
 

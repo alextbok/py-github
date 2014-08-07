@@ -17,21 +17,26 @@ class Api(object):
 	def __init__(self, \
 				username=None, \
 				password=None):
-		if username and password:
+		if username is not None and password is not None:
 			self._auth = (username, password)
 		else:
 			self._auth = None
 
+	###########
+	###USERS###
+	###########
+
 	'''
-	https://developer.github.com/v3/users/
+	if username:
+		https://developer.github.com/v3/users/#get-a-single-user
+	else:
+		https://developer.github.com/v3/users/#get-all-users
 	'''
 	def users(self, username=None, since=None):
-		#https://developer.github.com/v3/users/#get-a-single-user
-		if username:
+		if username is not None:
 			return r.Request.get( ('users/' + username), self._auth)
-		#https://developer.github.com/v3/users/#get-all-users
 		else:
-			if since:
+			if since is not None:
 				return r.Request.get( ('users?since=' + str(since)), self._auth)
 			else:
 				return r.Request.get('users', self._auth)
@@ -65,6 +70,10 @@ class Api(object):
 						payload[ arg[0] ] = arg[1]
 			return r.Request.patch('user', payload, self._auth)
 		return r.Request.get('user', self._auth)
+
+	###########
+	###REPOS###
+	###########
 
 	'''
 	if method is 'GET':
@@ -103,7 +112,7 @@ class Api(object):
 					payload[ arg[0] ] = arg[1]
 
 		if method is 'POST':
-			if not name:
+			if name is None:
 				print "ERROR: name is a required parameter wen creating a repository"
 				return
 			return r.Request.post('user/repos', payload, self._auth)
@@ -168,7 +177,7 @@ class Api(object):
 	https://developer.github.com/v3/repos/#list-all-public-repositories
 	'''
 	def repositories(self, since=None):
-			if since:
+			if since is not None:
 				url_rem = 'repositores?since=' + str(since)
 				return r.Request.get(url_rem, self._auth)
 			else:
@@ -253,9 +262,191 @@ class Api(object):
 						repo,\
 						branch=None):
 		url_rem = 'repos/' + owner + '/' + repo + '/branches'
-		if branch:
+		if branch is not None:
 			url_rem += '/' + str(branch)
 		return r.Request.get(url_rem, self._auth)
+
+	###########
+	##EVENTS###
+	###########
+
+	'''
+	https://developer.github.com/v3/activity/events/#list-public-events
+	'''
+	def events(self):
+		return r.Request.get('events', self._auth)
+
+	'''
+	https://developer.github.com/v3/activity/events/#list-repository-events
+	'''
+	def repos_events(self, owner, repo):
+		url_rem = 'events/' + owner + '/' + repo + '/events'
+		return r.Request.get(url_rem, self._auth)
+
+	'''
+	https://developer.github.com/v3/activity/events/#list-issue-events-for-a-repository
+	'''
+	def repos_issues_events(self, owner, repo):
+		url_rem = 'events/' + owner + '/' + repo + '/issues/events'
+		return r.Request.get(url_rem, self._auth)
+
+	'''
+	https://developer.github.com/v3/activity/events/#list-public-events-for-a-network-of-repositories
+	'''
+	def networks_events(self, owner, repo):
+		url_rem = 'networks/' + owner + '/' + repo + '/events'
+		return r.Request.get(url_rem, self._auth)
+
+	'''
+	https://developer.github.com/v3/activity/events/#list-public-events-for-an-organization
+	'''
+	def orgs_events(self, org):
+		url_rem = 'orgs/' + org + '/events'
+		return r.Request.get(url_rem, self._auth)
+
+
+	'''
+	https://developer.github.com/v3/activity/events/#list-events-that-a-user-has-received
+	'''
+	def user_received_events(self, user):
+		url_rem = 'users/' + user + '/received_events'
+		return r.Request.get(url_rem, self._auth)		
+
+	'''
+	https://developer.github.com/v3/activity/events/#list-public-events-that-a-user-has-received
+	'''
+	def user_received_events_public(self, user):
+		url_rem = 'users/' + user + '/received_events/public'
+		return r.Request.get(url_rem, self._auth)		
+
+	'''
+	https://developer.github.com/v3/activity/events/#list-events-for-an-organization
+	'''
+	def users_events_orgs(self, user, org):
+		url_rem = 'users/' + user + '/events/orgs/' + org
+		return r.Request.get(url_rem, self._auth)
+
+	###########
+	##FEEDS####
+	###########
+
+	def feeds(self):
+		return r.Request.get('feeds', self._auth)
+
+	#################
+	##NOTIFICATIONS##
+	#################
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/activity/notifications/#list-your-notifications
+	else:
+		https://developer.github.com/v3/activity/notifications/#mark-as-read
+	'''
+	def notifications(self, \
+						method='GET', \
+						_all=None, \
+						participating=None, \
+						since=None, \
+						last_read_at=None):
+
+		if method is not 'GET' or method is not 'PUT':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' '
+			return
+
+		params = {}
+		if method is 'PUT':
+			return r.Request.put('notifications', params= { 'last_read_at' : last_read_at }, self._auth) if last_read_at is not None else r.Request.put('notifications', params=None, self._auth)
+		if _all is not None:
+			params['all'] = _all
+		if participating is not None:
+			params['participating'] = participating
+		if since is not None:
+			params['since'] = since
+		return r.Request.get_with_params('notifications', params=params, self._auth) if len(params) > 0 else r.Request.get('notifications', self._auth)
+
+	'''
+	https://developer.github.com/v3/activity/notifications/#list-your-notifications-in-a-repository
+	'''
+	def repos_notifications(self, \
+						owner, \
+						repo, \
+						_all=None, \
+						participating=None, \
+						since=None):
+		url_rem = 'repos/' + owner + '/' + repo + '/notifications'
+		params = {}
+		if _all is not None:
+			params['all'] = _all
+		if participating is not None:
+			params['participating'] = participating
+		if since is not notifications_threads:
+			params['since'] = since
+		return r.Request.get_with_params(url_rem, params=params, self._auth) if len(params) > 0 else r.Request.get(url_rem, self._auth)
+
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/activity/notifications/#view-a-single-thread
+	else:
+		https://developer.github.com/v3/activity/notifications/#mark-a-thread-as-read
+	'''
+	def notifications_threads(self, \
+								id, \
+								method='GET'):
+		if method is not 'GET' or method is not 'PATCH':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PATCH\' '
+			return
+		if method is 'PATCH':
+			return r.Request.patch('notifications/threads/' + str(id), self._auth)
+		return r.Request.get('notifications/threads/' + str(id), self._auth)
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/activity/notifications/#get-a-thread-subscription
+	elif method is 'PUT':
+		https://developer.github.com/v3/activity/notifications/#set-a-thread-subscription
+	elif method is 'DELETE':
+		https://developer.github.com/v3/activity/notifications/#delete-a-thread-subscription
+	'''
+	def notifications_threads_subscription(self, \
+								id, \
+								method='GET', \
+								subscribed=None, \
+								ignored=None):
+		if method is not 'GET' or method is not 'PUT' or method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' '
+			return
+		url_rem = 'notifications/threads/' + str(id) + '/subscription'
+		if method is 'PUT':
+			payload = {}
+			if subscribed is not None:
+				payload['subscribed'] = subscribed
+			if ignored is not None:
+				payload['ignored'] = ignored
+			return r.Request.put(url_rem, data=payload, self._auth) if len(payload) > 0 else r.Request.put(url_rem, data=None, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem, self._auth)
+		return r.Request.get(url_rem, self._auth)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
