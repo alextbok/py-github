@@ -21,7 +21,7 @@ class Request():
 	@memoized.Memoized
 	def get(url_remainder, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.get(url, auth=auth) if auth else requests.get(url)
+		return requests.get(url, auth=auth) if auth is not None else requests.get(url)
 
 	'''
 	GET (with params)
@@ -31,7 +31,7 @@ class Request():
 	@memoized.Memoized
 	def get_with_params(url_remainder, params, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.get(url, params=params, auth=auth) if auth else requests.get(url, params=params)
+		return requests.get(url, params=params, auth=auth) if auth is not None else requests.get(url, params=params)
 
 
 	'''
@@ -40,7 +40,7 @@ class Request():
 	@staticmethod
 	def post(url_remainder, data, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.post(url, data=json.dumps(data), auth=auth) if auth else requests.post(url, data=json.dumps(data) )
+		return requests.post(url, data=json.dumps(data), auth=auth) if auth is not None else requests.post(url, data=json.dumps(data) )
 
 	'''
 	PATCH
@@ -48,7 +48,7 @@ class Request():
 	@staticmethod
 	def patch(url_remainder, data, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.post(url, data=json.dumps(data), auth=auth) if auth else requests.post(url, data=json.dumps(data) )
+		return requests.patch(url, data=json.dumps(data), auth=auth) if auth is not None else requests.patch(url, data=json.dumps(data) )
 
 	'''
 	DELETE
@@ -56,15 +56,17 @@ class Request():
 	@staticmethod
 	def delete(url_remainder, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.post(url, auth=auth) if auth else requests.post(url)
+		return requests.delete(url, auth=auth) if auth else requests.delete(url)
 
 	'''
 	PUT
 	'''
 	@staticmethod
-	def put(url_remainder, data=None, auth=None):
+	def put(url_remainder, data=None, headers=None, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.put(url, data=json.dumps(data), auth=auth) if auth else requests.post(url, data=json.dumps(data))
+		if headers is not None:
+			return requests.put(url, data=json.dumps(data), headers=json.dumps(headers), auth=auth) if auth is not None else requests.put(url, data=json.dumps(data), headers=json.dumps(headers) )
+		return requests.put(url, data=json.dumps(data), auth=auth) if auth is not None else requests.put(url, data=json.dumps(data))
 
 
 

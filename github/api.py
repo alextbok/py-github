@@ -57,7 +57,7 @@ class Api(object):
 			hireable=None, \
 			bio=None):
  
-		if method is not 'GET' or method is not 'PATCH':
+		if method is not 'GET' and method is not 'PATCH':
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'PATCH\' '
 			return
@@ -98,7 +98,7 @@ class Api(object):
 					gitignore_template=None, \
 					license_template=None):
 
-		if method is not 'GET' or method is not 'POST':
+		if method is not 'GET' and method is not 'POST':
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'POST\' '
 			return
@@ -157,7 +157,7 @@ class Api(object):
 					gitignore_template=None, \
 					license_template=None):
 
-		if method is not 'GET' or method is not 'POST':
+		if method is not 'GET' and method is not 'POST':
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'POST\' '
 			return
@@ -205,7 +205,7 @@ class Api(object):
 				has_downloads=None, \
 				default_branch=None):
 
-		if method is not 'GET' or method is not 'PATCH' or method is not 'delete'.upper():
+		if method is not 'GET' and method is not 'PATCH' and method is not 'delete'.upper():
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'PATCH\' or \'DELETE\' '
 			return
@@ -350,14 +350,14 @@ class Api(object):
 						since=None, \
 						last_read_at=None):
 
-		if method is not 'GET' or method is not 'PUT':
+		if method is not 'GET' and method is not 'PUT':
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'PUT\' '
 			return
 
 		params = {}
 		if method is 'PUT':
-			return r.Request.put('notifications', params= { 'last_read_at' : last_read_at }, self._auth) if last_read_at is not None else r.Request.put('notifications', params=None, self._auth)
+			return r.Request.put('notifications', data={ 'last_read_at' : last_read_at }, headers=None, auth=self._auth) if last_read_at is not None else r.Request.put('notifications', data=None, headers={ 'Content-Length' : None}, auth=self._auth)
 		if _all is not None:
 			params['all'] = _all
 		if participating is not None:
@@ -395,7 +395,7 @@ class Api(object):
 	def notifications_threads(self, \
 								id, \
 								method='GET'):
-		if method is not 'GET' or method is not 'PATCH':
+		if method is not 'GET' and method is not 'PATCH':
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'PATCH\' '
 			return
@@ -416,7 +416,7 @@ class Api(object):
 								method='GET', \
 								subscribed=None, \
 								ignored=None):
-		if method is not 'GET' or method is not 'PUT' or method is not 'delete'.upper():
+		if method is not 'GET' and method is not 'PUT' and method is not 'delete'.upper():
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'PUT\' '
 			return
@@ -427,24 +427,61 @@ class Api(object):
 				payload['subscribed'] = subscribed
 			if ignored is not None:
 				payload['ignored'] = ignored
-			return r.Request.put(url_rem, data=payload, self._auth) if len(payload) > 0 else r.Request.put(url_rem, data=None, self._auth)
+			return r.Request.put(url_rem, data=payload, headers=None, auth=self._auth) if len(payload) > 0 else r.Request.put(url_rem, data=None, headers={ 'Content-Length' : 0 }, auth=self._auth)
 		if method is 'delete'.upper():
 			return r.Request.delete(url_rem, self._auth)
 		return r.Request.get(url_rem, self._auth)
 
 
+	#############
+	##STARRING###
+	#############
 
+	'''
+	https://developer.github.com/v3/activity/starring/#list-stargazers
+	'''
+	def repos_stargazers(self,owner,repo):
+		url_rem = 'repos/' + owner + '/' + repo + '/stargazers'
+		return r.Request.get(url_rem, self._auth)
 
+	'''
+	https://developer.github.com/v3/activity/starring/#list-repositories-being-starred
+	'''
+	def users_starred(self, \
+						username=None, \
+						sort=None, \
+						direction=None):
+		params = {}
+		if sort is not None:
+			params['sort'] = sort
+		if direction is not None:
+			params['direction'] = direction
+		if username is not None:
+			return r.Request.get_with_params('users/' + username + '/starred', params=params, self._auth) if len(params) > 0 else r.Request.get('users/' + username + '/starred', self._auth)
+		return r.Request.get_with_params('users/starred', params=params, self._auth) if len(params) > 0 else r.Request.get('users/starred', self._auth)
 
-
-
-
-
-
-
-
-
-
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/activity/starring/#check-if-you-are-starring-a-repository
+	elif method is 'PUT':
+		https://developer.github.com/v3/activity/starring/#star-a-repository
+	elif method is DELETE:
+		https://developer.github.com/v3/activity/starring/#unstar-a-repository
+	'''
+	def user_starred(self, \
+			owner, \
+			repo, \
+			method='GET'):
+		if method is not 'GET' and method is not 'delete'.upper() and method is not 'PUT':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'DELETE\' or \'PUT\''
+			return
+		url_rem = 'user/starred/' + owner + '/' + repo
+		if method is 'PUT':
+			return r.Request.put(url_rem, data=None, headers={ 'Content-Length' : 0 }, auth=self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem, auth=self._auth)
+		return r.Request.get(url_rem, self._auth)
 
 
 
