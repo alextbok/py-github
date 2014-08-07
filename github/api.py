@@ -43,7 +43,8 @@ class Api(object):
 	else, get (GET) the user:
 		https://developer.github.com/v3/users/#get-the-authenticated-user
 	'''
-	def user(self, 
+	def user(self,
+			method='GET', \
 			name=None, \
 			email=None, \
 			blog=None, \
@@ -52,15 +53,19 @@ class Api(object):
 			hireable=None, \
 			bio=None):
  
-		payload = {}
+		if method is not 'GET' or method is not 'PATCH':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PATCH\' '
+			return
 
-		args = [arg for arg in locals().items()]
-
-		for arg in args:
-				if arg[1] is not None and arg[0] is not 'self' and arg[0] is not 'payload':
-					payload[ arg[0] ] = arg[1]
-
-		return r.Request.patch('user', payload, self._auth) if len(payload) > 0 else r.Request.get('user', self._auth)
+		if method is 'PATCH':
+			payload = {}
+			args = [arg for arg in locals().items()]
+			for arg in args:
+					if arg[1] is not None and arg[0] is not 'self' and arg[0] is not 'payload':
+						payload[ arg[0] ] = arg[1]
+			return r.Request.patch('user', payload, self._auth)
+		return r.Request.get('user', self._auth)
 
 	'''
 	if method is 'GET':
@@ -172,7 +177,12 @@ class Api(object):
 
 
 	'''
-	https://developer.github.com/v3/repos/#edit
+	if method is 'GET':
+		https://developer.github.com/v3/repos/#get
+	elif method is 'PATCH':
+		https://developer.github.com/v3/repos/#edit
+	elif method is 'DELETE':
+		https://developer.github.com/v3/repos/#delete
 	'''
 	def repos(self, \
 				owner, \
