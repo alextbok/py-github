@@ -32,8 +32,7 @@ class Api(object):
 		#https://developer.github.com/v3/users/#get-all-users
 		else:
 			if since:
-				url_rem = 'users?since=' + str(since)
-				return r.Request.get(url_rem, self._auth)
+				return r.Request.get( ('users?since=' + str(since)), self._auth)
 			else:
 				return r.Request.get('users', self._auth)
 
