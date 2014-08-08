@@ -2,7 +2,6 @@
 
 import request as r
 
-
 '''
 GitHub API object
 '''
@@ -42,10 +41,10 @@ class Api(object):
 				return r.Request.get('users', self._auth)
 
 	'''
-	if one or more parameters are passed in, update (PATCH) the user:
-		https://developer.github.com/v3/users/#update-the-authenticated-user
-	else, get (GET) the user:
+	if method is 'GET':
 		https://developer.github.com/v3/users/#get-the-authenticated-user
+	else:
+		https://developer.github.com/v3/users/#update-the-authenticated-user
 	'''
 	def user(self,
 			method='GET', \
@@ -113,7 +112,7 @@ class Api(object):
 
 		if method is 'POST':
 			if name is None:
-				print "ERROR: name is a required parameter wen creating a repository"
+				print "ERROR: name is a required parameter when creating a repository"
 				return
 			return r.Request.post('user/repos', payload, self._auth)
 		return r.Request.get_with_params('user/repos', payload, self._auth) if len(payload) > 0 else r.Request.get('user/repos', self._auth)
@@ -219,7 +218,7 @@ class Api(object):
 				if arg[1] is not None and arg[0] not in {'self' : 1, 'payload' : 1, 'owner' : 1, 'method' : 1, 'repo' : 1 }:
 					payload[ arg[0] ] = arg[1]
 			return r.Request.patch(url_rem, payload, self._auth)
-		else if method is 'delete'.upper():
+		elif method is 'delete'.upper():
 			return r.Request.delete(url_rem, self._auth)
 		return r.Request.get(url_rem, self._auth)
 
@@ -327,7 +326,7 @@ class Api(object):
 		return r.Request.get(url_rem, self._auth)
 
 	###########
-	##FEEDS####
+	###FEEDS###
 	###########
 
 	def feeds(self):
@@ -357,14 +356,14 @@ class Api(object):
 
 		params = {}
 		if method is 'PUT':
-			return r.Request.put('notifications', data={ 'last_read_at' : last_read_at }, headers=None, auth=self._auth) if last_read_at is not None else r.Request.put('notifications', data=None, headers={ 'Content-Length' : None}, auth=self._auth)
+			return r.Request.put('notifications', { 'last_read_at' : last_read_at }, None, self._auth) if last_read_at is not None else r.Request.put('notifications', None, { 'Content-Length' : None}, self._auth)
 		if _all is not None:
 			params['all'] = _all
 		if participating is not None:
 			params['participating'] = participating
 		if since is not None:
 			params['since'] = since
-		return r.Request.get_with_params('notifications', params=params, self._auth) if len(params) > 0 else r.Request.get('notifications', self._auth)
+		return r.Request.get_with_params('notifications', params, self._auth) if len(params) > 0 else r.Request.get('notifications', self._auth)
 
 	'''
 	https://developer.github.com/v3/activity/notifications/#list-your-notifications-in-a-repository
@@ -383,7 +382,7 @@ class Api(object):
 			params['participating'] = participating
 		if since is not notifications_threads:
 			params['since'] = since
-		return r.Request.get_with_params(url_rem, params=params, self._auth) if len(params) > 0 else r.Request.get(url_rem, self._auth)
+		return r.Request.get_with_params(url_rem, params, self._auth) if len(params) > 0 else r.Request.get(url_rem, self._auth)
 
 
 	'''
@@ -418,7 +417,7 @@ class Api(object):
 								ignored=None):
 		if method is not 'GET' and method is not 'PUT' and method is not 'delete'.upper():
 			print 'ERROR: invalid method parameter:' + str(method)
-			print 'method must be \'GET\' (default) or \'PUT\' '
+			print 'method must be \'GET\' (default) or \'PUT\' or \'DELETE\''
 			return
 		url_rem = 'notifications/threads/' + str(id) + '/subscription'
 		if method is 'PUT':
@@ -427,15 +426,15 @@ class Api(object):
 				payload['subscribed'] = subscribed
 			if ignored is not None:
 				payload['ignored'] = ignored
-			return r.Request.put(url_rem, data=payload, headers=None, auth=self._auth) if len(payload) > 0 else r.Request.put(url_rem, data=None, headers={ 'Content-Length' : 0 }, auth=self._auth)
+			return r.Request.put(url_rem, payload, None, self._auth) if len(payload) > 0 else r.Request.put(url_rem, None, { 'Content-Length' : 0 }, self._auth)
 		if method is 'delete'.upper():
 			return r.Request.delete(url_rem, self._auth)
 		return r.Request.get(url_rem, self._auth)
 
 
-	#############
-	##STARRING###
-	#############
+	##############
+	###STARRING###
+	##############
 
 	'''
 	https://developer.github.com/v3/activity/starring/#list-stargazers
@@ -457,8 +456,8 @@ class Api(object):
 		if direction is not None:
 			params['direction'] = direction
 		if username is not None:
-			return r.Request.get_with_params('users/' + username + '/starred', params=params, self._auth) if len(params) > 0 else r.Request.get('users/' + username + '/starred', self._auth)
-		return r.Request.get_with_params('users/starred', params=params, self._auth) if len(params) > 0 else r.Request.get('users/starred', self._auth)
+			return r.Request.get_with_params('users/' + username + '/starred', params, self._auth) if len(params) > 0 else r.Request.get('users/' + username + '/starred', self._auth)
+		return r.Request.get_with_params('users/starred', params, self._auth) if len(params) > 0 else r.Request.get('users/starred', self._auth)
 
 	'''
 	if method is 'GET':
@@ -478,10 +477,182 @@ class Api(object):
 			return
 		url_rem = 'user/starred/' + owner + '/' + repo
 		if method is 'PUT':
-			return r.Request.put(url_rem, data=None, headers={ 'Content-Length' : 0 }, auth=self._auth)
+			return r.Request.put(url_rem, None, { 'Content-Length' : 0 }, self._auth)
 		if method is 'delete'.upper():
-			return r.Request.delete(url_rem, auth=self._auth)
+			return r.Request.delete(url_rem, self._auth)
 		return r.Request.get(url_rem, self._auth)
+
+	##############
+	###WATCHING###
+	##############
+
+	'''
+	https://developer.github.com/v3/activity/watching/#list-watchers
+	'''
+	def repos_subscribers(self, owner, repo):
+		url_rem = 'repos/' + owner + '/' + repo + '/subscribers'
+		return r.Request.get(url_rem, self.auth)
+
+	'''
+	https://developer.github.com/v3/activity/watching/#list-repositories-being-watched
+	'''
+	def users_subscriptions(self, user):
+		url_rem = 'users/' + user + '/subscriptions'
+		return r.Request.get(url_rem, self.auth)
+
+	'''
+	https://developer.github.com/v3/activity/watching/#list-repositories-being-watched
+	'''
+	def user_subscriptions(self):
+		return r.Request.get('user/subscriptions', self.auth)
+
+	'''
+	https://developer.github.com/v3/activity/watching/#get-a-repository-subscription
+	'''
+	def repos_subscription(self, \
+							owner, \
+							repo, \
+							method='GET', \
+							subscribed=None, \
+							ignored=None):
+		if method is not 'GET' and method is not 'PUT' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' or \'DELETE\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/subscription'
+		if method is 'PUT':
+			payload = {}
+			if subscribed is not None:
+				payload['subscribed'] = subscribed
+			if ignored is not None:
+				payload['ignored'] = ignored
+			return r.Request.put(url_rem, payload, None, self._auth) if len(payload) > 0 else r.Request.put(url_rem, None, { 'Content-Length' : 0 }, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem, self._auth)
+		return r.Request.get(url_rem, self._auth)
+
+	###########
+	###GISTS###
+	###########
+
+	'''
+	https://developer.github.com/v3/gists/#list-gists
+	'''		
+	def users_gists(self, user, since=None):
+		url_rem = 'user/' + user + '/gists'
+		if since is not None:
+			url_rem += '?since=' + str(since)
+		return r.Request.get(url_rem, self._auth) 
+
+	def gists_public(self, user, since=None):
+		url_rem = 'gists/public'
+		if since is not None:
+			url_rem += '?since=' + str(since)
+		return r.Request.get(url_rem, self._auth) 
+
+	def gists_starred(self, user, since=None):
+		url_rem = 'gists/starred'
+		if since is not None:
+			url_rem += '?since=' + str(since)
+		return r.Request.get(url_rem, self._auth) 
+
+	'''
+	if id is None:
+		https://developer.github.com/v3/gists/#list-gists
+	if id is not None and method is 'GET':
+		https://developer.github.com/v3/gists/#get-a-single-gist
+	if method is 'POST':
+		https://developer.github.com/v3/gists/#create-a-gist
+	if method is 'PATCH':
+		https://developer.github.com/v3/gists/#edit-a-gist
+	if method is 'DELETE':
+		https://developer.github.com/v3/gists/#delete-a-gist
+	'''
+	def gists(self, \
+				user, \
+				method='GET', \
+				_id=None, \
+				since=None, \
+				files=None, \
+				description=None, \
+				public=None, \
+				content=None, \
+				filename=None):
+		if method not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' or \'PATCH\''
+			return
+		url_rem = 'gists'
+		if _id is None:
+			if since is not None:
+				url_rem += '?since=' + str(since)
+			return r.Request.get(url_rem, self._auth) 
+		if method is 'GET':
+			return r.Request.get(url_rem + str(_id), self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + str(_id), self._auth)
+		payload = {}
+		if files is not None:
+			payload['files'] = files
+		if description is not None:
+			payload['description'] = description
+		if method is 'POST':
+			if files is None:
+				print 'ERROR: files param is required when creating a gist'
+				return
+			if public is not None:
+				payload['public'] = public
+			return r.Request.post(url_rem + str(_id), payload, self._auth)
+		if content is not None:
+			payload['content'] = content
+		if filename is not None:
+			payload['filename'] = filename
+		return r.Request.patch(url_rem + str(_id), payload, self._auth)
+
+	'''
+	https://developer.github.com/v3/gists/#list-gist-commits
+	'''
+	def gists_commits(self, _id):
+		return r.Request.get('gists/' + str(_id) + '/commits', self._auth)
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/gists/#check-if-a-gist-is-starred
+	if method is 'PUT':
+		https://developer.github.com/v3/gists/#star-a-gist
+	if method is 'DELETE':
+		https://developer.github.com/v3/gists/#unstar-a-gist
+	'''
+	def gists_star(self, _id, method='GET'):
+		if method is not 'GET' and method is not 'PUT' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' or \'DELETE\''
+			return
+		url_rem = 'gists/' + str(_id) + '/star'
+		if method is 'PUT':
+			return r.Request.put(url_rem, None, { 'Content-Length' : 0 }, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem, self._auth)
+		return r.Request.get(url_rem, self._auth)
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/gists/#list-gist-forks
+	else:
+		https://developer.github.com/v3/gists/#fork-a-gist
+	'''
+	def gists_forks(self, _id, method='GET'):
+		if method is not 'GET' and method is not 'POST':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return
+		url_rem = 'gists/' + str(_id) + '/forks' 
+		payload = {}
+		if method is 'POST':
+			return r.Request.post(url_rem, payload, self._auth)
+		return r.Request.get(url_rem, self._auth)
+
+
 
 
 

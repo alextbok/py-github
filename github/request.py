@@ -1,12 +1,13 @@
 #!/usr/bin/python
 
 from github import requests
-from github import simplejson as json
+from github import json
 import memoized
 
 '''
 Makes (un)authenticated calls to the GitHub API
 Calls are memoized to help with rate-limit
+Essentially a github wrapper for the requests module
 '''
 
 GITHUB_API_BASE_URL = 'https://api.github.com/'
