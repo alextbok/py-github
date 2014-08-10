@@ -652,10 +652,203 @@ class Api(object):
 			return r.Request.post(url_rem, payload, self._auth)
 		return r.Request.get(url_rem, self._auth)
 
+	'''
+	if method is 'GET':
+		if id:
+			https://developer.github.com/v3/gists/comments/#get-a-single-comment
+		else:
+			https://developer.github.com/v3/gists/comments/#list-comments-on-a-gist
+	elif method is 'POST':
+		https://developer.github.com/v3/gists/comments/#create-a-comment
+	elif method is 'PATCH':
+		https://developer.github.com/v3/gists/comments/#edit-a-comment
+	elif method is 'DELETE':
+		https://developer.github.com/v3/gists/comments/#delete-a-comment
+	'''
+	def gists_comments(self, \
+		gist_id, \
+		method='GET', \
+		body=None, \
+		_id=None):
+		if method is not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' or \'PATCH\' or \'DELETE\''
+			return
+		if (method is 'PATCH' or method is 'delete'.upper() ) and (_id is None):
+			print 'ERROR: _id is required when editing or deleting a gist comment'
+			return
+		url_rem = 'gists/' + str(gist_id) + '/comments'
+		if method is 'POST' or method is 'PATCH':
+			if body is None:
+				print 'ERROR: body is a required paramter when creating/editing a gist comment'
+				return
+			if method is 'POST':
+				return r.Requests.post(url_rem, { 'body' : body }, self._auth)
+			return r.Requests.patch(url_rem + '/' + str(_id), { 'body' : body }, self._auth)
+		if method is 'delete'.upper():
+			return r.Requests.delete(url_rem + str(_id))
+		return r.Requests.get(url_rem, self._auth) if _id is None else r.Requests.get(url_rem + '/' + str(_id), self._auth) 
 
+	#########
+	##BLOBS##
+	#########
 
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/git/blobs/#get-a-blob
+	else:
+		https://developer.github.com/v3/git/blobs/#create-a-blob
+	'''
+	def repos_git_blobs(self, \
+						owner, \
+						repo, \
+						sha, \
+						method='GET', \
+						content=None, \
+						encoding='utf-8'):
+		if method is not 'GET' and method is not 'POST':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/git/blobs/' + sha
+		if method is 'POST':
+			if content is None:
+				print 'ERROR: content is required when creating a blob'
+				return
+			return r.Request.post(url_rem, { 'content' : content, 'encoding' : encoding }, self._auth)
+		return r.Request.get(url_rem, self._auth)
 
+	#########
+	#COMMITS#
+	#########
 
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/git/commits/#get-a-commit
+	else:
+		https://developer.github.com/v3/git/commits/#create-a-commit
+	'''
+	def repos_git_commits(self,
+						owner, \
+						repo, \
+						sha=None, \
+						method='GET', \
+						message=None, \
+						tree=None, \
+						parents=None):
+		if method is not 'GET' and method is not 'POST':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/git/commits'
+		if method is 'POST':
+			if message is None or tree is None or parents is None:
+				print 'ERROR: message, tree and parents are required when creating a commit'
+				return
+			payload = { 'message' : message, 'tree' : tree, 'parents' : parents }
+			return r.Request.post(url_rem, payload, self._auth)
+		if sha is None:
+			print 'ERROR: sha is required to get a commit'
+			return
+		return r.Request.get(url_rem + '/' + sha, self._auth)
+
+	############
+	#REFERENCES#
+	############
+
+	'''
+	if method is 'GET':
+		if refs is not None:
+			https://developer.github.com/v3/git/refs/#get-a-reference
+		else: 
+			https://developer.github.com/v3/git/refs/#get-all-references
+	if method is 'POST':
+		https://developer.github.com/v3/git/refs/#create-a-reference
+	if method is 'PATCH':
+		https://developer.github.com/v3/git/refs/#update-a-reference
+	if method is 'DELTE':
+		https://developer.github.com/v3/git/refs/#delete-a-reference
+	'''
+	def repos_git_refs(self,
+					owner, \
+					repo, \
+					ref=None, \
+					method='GET', \
+					_ref=None, \
+					sha = None, \
+					force=None):
+		if method is not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' or \'PATCH\' or \'DELETE\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/git/refs'
+		if method is 'PATCH':
+			return r.Request.patch(url_rem + '/' + ref, { 'sha' : sha, 'force' : force }, self._auth)
+		if method is 'POST':
+			return r.Request.post(url_rem, { 'ref' : _ref, 'sha' : sha }, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + ref, self._auth)
+		return r.Request.get(url_rem, self._auth) if ref is None else r.Request.get(url_rem + '/' + ref, self._auth)
+
+	########
+	##TAGS##
+	########
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/git/tags/#get-a-tag
+	else:
+		https://developer.github.com/v3/git/tags/#create-a-tag-object
+	'''
+	def repos_get_tags(self, \
+						owner, \
+						repo, \
+						sha=None, \
+						method='GET', \
+						tag=None, \
+						message=None, \
+						_object=None, \
+						_type=None, \
+						tagger=None):
+		if method is not 'GET' and method is not 'POST':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/git/tags'
+		if method is 'POST:'
+			payload = { 'tag' : tag, 'message' : message, 'object' : _object, 'type' : _type, 'tagger' : tagger }
+			return r.Request.post(url_rem, payload, self._auth)
+		return r.Request.get(url_rem + '/' + sha, self._auth)
+
+	#########
+	##TREES##
+	#########
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/git/trees/#get-a-tree
+	else:
+		https://developer.github.com/v3/git/trees/#create-a-tree
+	'''
+	def repos_git_trees(self, \
+						owner, \
+						repo, \
+						sha=None, \
+						method='GET', \
+						recursive=False, \
+						tree=None, \
+						base_tree=None):
+		if method is not 'GET' and method is not 'POST':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/git/trees'
+		if method is 'POST':
+			if tree is None:
+				print 'ERROR: tree parameter is required when creating a tree'
+				return
+			return r.Request.post(url_rem, { 'tree' : tree, 'base_tree' : base_tree }, self._auth)
+		return r.Request.get(url_rem + '/' + sha + '?recursive=1', self._auth) if recursive else r.Request.get(url_rem + '/' + sha, self._auth)
 
 
 
