@@ -29,12 +29,12 @@ class Api(object):
 	else:
 		https://developer.github.com/v3/users/#get-all-users
 	'''
-	def users(self, username=None, since=None):
-		if username is not None:
+	def users(self, **kwargs):
+		if 'username' in kwargs:
 			return r.Request.get( ('users/' + username), self._auth)
 		else:
-			if since is not None:
-				return r.Request.get( ('users?since=' + str(since)), self._auth)
+			if 'since' in kwargs:
+				return r.Request.get( ('users?since=' + str(since) ), self._auth)
 			else:
 				return r.Request.get('users', self._auth)
 
