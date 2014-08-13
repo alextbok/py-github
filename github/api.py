@@ -45,12 +45,10 @@ class Api(object):
 		https://developer.github.com/v3/users/#update-the-authenticated-user
 	'''
 	def user(self, method='GET', **kwargs):
- 
 		if method is not 'GET' and method is not 'PATCH':
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'PATCH\' '
 			return
-
 		if method is 'PATCH':
 			payload = {}
 			for arg in kwargs:
@@ -58,9 +56,9 @@ class Api(object):
 			return r.Request.patch('user', payload, self._auth)
 		return r.Request.get('user', self._auth)
 
-	###########
-	###REPOS###
-	###########
+	##################
+	###REPOSITORIES###
+	##################
 
 	'''
 	if method is 'GET':
@@ -69,16 +67,13 @@ class Api(object):
 		https://developer.github.com/v3/repos/#create
 	'''
 	def user_repos(self, method='GET', **kwargs):
-
 		if method is not 'GET' and method is not 'POST':
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'POST\' '
 			return
-
 		payload = {}
 		for arg in kwargs:
 			payload[arg] = kwargs[arg]
-
 		if method is 'POST':
 			if name is None:
 				print "ERROR: name is a required parameter when creating a repository"
@@ -90,11 +85,9 @@ class Api(object):
 	https://developer.github.com/v3/repos/#list-user-repositories
 	'''
 	def users_repos(self, username, **kwargs):
-
 		payload = {}
 		for arg in kwargs:
 			payload[arg] = kwargs[arg]
-
 		url_rem = 'users/' + username + '/repos'
 		return r.Request.get_with_params(url_rem, payload, self._auth) if len(payload) > 0 else r.Request.get(url_rem, self._auth)
 
@@ -102,14 +95,11 @@ class Api(object):
 	https://developer.github.com/v3/repos/#list-organization-repositories
 	'''
 	def orgs_repos(self, org, method='GET', **kwargs):
-
 		if method is not 'GET' and method is not 'POST':
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'POST\' '
 			return
-
 		url_rem = 'orgs/' + org + '/repos'
-
 		if method is 'POST':
 			payload = {}
 			for arg in kwargs:
@@ -120,38 +110,41 @@ class Api(object):
 	'''
 	https://developer.github.com/v3/repos/#list-all-public-repositories
 	'''
-	def repositories(self, since=None):
-			if since is not None:
-				url_rem = 'repositores?since=' + str(since)
-				return r.Request.get(url_rem, self._auth)
-			else:
-				return r.Request.get('repositories', self._auth)
-
+	def repositories(self, **kwargs):
+		url_rem = 'repositores'
+		return r.Request.get(url_rem + '?since=' + str(kwargs['since']), self._auth) if 'since' in kwargs else r.Request.get(url_rem, self._auth)
 
 	'''
 	if method is 'GET':
-		https://developer.github.com/v3/repos/#get
+		if archive_format is not None:
+			https://developer.github.com/v3/repos/contents/#get-archive-link
+		else:
+			https://developer.github.com/v3/repos/#get
 	elif method is 'PATCH':
 		https://developer.github.com/v3/repos/#edit
 	elif method is 'DELETE':
 		https://developer.github.com/v3/repos/#delete
 	'''
-	def repos(self, owner, repo, method='GET', **kwargs):
-
+	def repos(self, owner, repo, archive_format=None, ref=None, method='GET', **kwargs):
 		if method is not 'GET' and method is not 'PATCH' and method is not 'delete'.upper():
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'PATCH\' or \'DELETE\' '
 			return
-
 		url_rem = 'repos/' + owner + '/' + repo
-
 		if method is 'PATCH':
 			payload = {}
 			for arg in kwargs:
 				payload[arg] = kwargs[arg]
 			return r.Request.patch(url_rem, payload, self._auth)
-		elif method is 'delete'.upper():
+		if method is 'delete'.upper():
 			return r.Request.delete(url_rem, self._auth)
+		if archive_format is not None and ref is not None:
+			params = {}
+			for arg in kwargs:
+				params[arg] = kwargs[arg]
+			if len(params) > 0:
+				return r.Request.get_with_params(url_rem + '/' + archive_format + '/' + ref, params, self._auth)
+			return r.Request.get(url_rem + '/' + archive_format + '/' + ref, self._auth)
 		return r.Request.get(url_rem, self._auth)
 
 	'''
@@ -193,6 +186,347 @@ class Api(object):
 		if branch is not None:
 			url_rem += '/' + str(branch)
 		return r.Request.get(url_rem, self._auth)
+
+	'''
+	if method is 'GET':
+		if username is None:
+			https://developer.github.com/v3/repos/collaborators/#list
+		else:
+			https://developer.github.com/v3/repos/collaborators/#get
+	if method is 'PUT':
+		https://developer.github.com/v3/repos/collaborators/#add-collaborator
+	if method is 'DELETE':
+		https://developer.github.com/v3/repos/collaborators/#remove-collaborator
+	'''
+	def repos_collaborators(self, owner, repo, username=None, method='GET'):
+		if method is not 'GET' and method is not 'PUT' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' or \'DELETE\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/collaborators'
+		if method is 'PUT':
+			return r.Request.put(url_rem + '/' + username, None, { 'Content-Length' : 0 }, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + username, self._auth)
+		return r.Request.get(url_rem, self._auth) if username is None else r.Request.get(url_rem + '/' + username, self._auth)
+
+	'''
+	if method is 'GET':
+		if id is None:
+			https://developer.github.com/v3/repos/comments/#list-commit-comments-for-a-repository
+		else:
+			https://developer.github.com/v3/repos/comments/#get-a-single-commit-comment
+	if method is 'PATCH':
+		https://developer.github.com/v3/repos/comments/#update-a-commit-comment
+	if method is 'DELETE':
+		https://developer.github.com/v3/repos/comments/#delete-a-commit-comment
+	'''
+	def repos_comments(self, owner, repo, id=None, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'PATCH' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PATCH\' or \'DELETE\''
+			return	
+		url_rem = 'repos/' + owner + '/' + repo + '/comments'
+		if method is 'PATCH':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			if 'body' not in kwargs:
+				print 'ERROR: body is required when editing a commit comment'
+				return
+			return r.Request.patch(url_rem + '/' + str(id), payload, self._auth)
+		if method is 'delete'.upper():
+			r.Request.patch(url_rem + '/' + str(id), self._auth)
+		return r.Request.get(url_rem, self._auth) if id is None else r.Request.get(url_rem + '/' + str(id), self._auth)
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/repos/comments/#list-comments-for-a-single-commit
+	else:
+		https://developer.github.com/v3/repos/comments/#create-a-commit-comment
+	'''
+	def repos_commits_comments(self, owner, repo, ref=None, sha=None, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'POST':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return	
+		url_rem = url_rem = 'repos/' + owner + '/' + repo + '/commits'
+		if method is 'POST':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			return r.Request.post(url_rem + '/' + sha + '/comments', payload, self._auth)
+		return r.Request.get(url_rem + '/' + ref + '/comments', self._auth)
+
+	'''
+	if sha is None:
+		https://developer.github.com/v3/repos/commits/#list-commits-on-a-repository
+	else:
+		https://developer.github.com/v3/repos/commits/#get-a-single-commit
+	'''
+	def repos_commits(self, owner, repo, sha=None, **kwargs):
+		url_rem = 'repos/' + owner + '/' + repo + '/commits'
+		if sha is None:
+			params = {}
+			for arg in kwargs:
+				params[arg] = kwargs[arg]
+			return r.Request.get_with_params(url_rem, params, self._auth)
+		return r.Request.get(url_rem + '/' + sha, self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/contents/#get-the-readme
+	'''
+	def repos_readme(self, owner, repo, **kwargs):
+		url_rem = 'repos/' + owner + '/' + repo + '/readme'
+		params = {}
+		for arg in kwargs:
+			params[arg] = kwargs[arg]
+		return r.Request.get_with_params(url_rem, params, self._auth) if len(params) > 0 else r.Request.get(url_rem, self._auth)
+
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/repos/contents/#get-contents
+	if method is 'PUT':
+		https://developer.github.com/v3/repos/contents/#create-a-file
+		or
+		https://developer.github.com/v3/repos/contents/#update-a-file
+	else:
+		https://developer.github.com/v3/repos/contents/#delete-a-file
+	'''
+	def repos_contents(self, owner, repo, path, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'PUT' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' or \'DELETE\''
+			return	
+		url_rem = 'repos/' + owner + '/' + repo + '/contents/' + path
+		if method is 'PUT':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			return r.Request.put(url_rem, payload, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem, self._auth)
+		return r.Request.get_with_params(url_rem, payload, self._auth) if len(payload) > 0 else r.Request.get(url_rem, self._auth)
+
+	'''
+	if method is 'GET':
+		if id is None:
+			https://developer.github.com/v3/repos/keys/#list
+		else:
+			https://developer.github.com/v3/repos/keys/#get
+	if method is 'POST':
+		https://developer.github.com/v3/repos/keys/#create
+	else:
+		https://developer.github.com/v3/repos/keys/#delete
+	'''
+	def repos_keys(self, owner, repo, id=None, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'POST' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' or \'DELETE\''
+			return		
+		url_rem = 'repos/' + owner + '/' + repo + '/keys'
+		if method is 'POST':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			return r.Request.post(url_rem, payload, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + str(id), self._auth)
+		return r.Request.get(url_rem, self._auth) if id is None else r.Request.get(url_rem + '/' + str(id), self._auth)
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/repos/forks/#list-forks
+	else:
+		https://developer.github.com/v3/repos/forks/#create-a-fork
+	'''
+	def repos_forks(self, owner, repo, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'POST':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return		
+		url_rem = 'repos/' + owner + '/' + repo + '/forks'
+		if method is 'POST':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			return r.Request.post(url_rem, payload, self._auth)			
+		return r.Request.get(url_rem, self._auth)
+
+	'''
+	if method is 'GET':
+		if id is None:
+			https://developer.github.com/v3/repos/hooks/#list-hooks
+		else:
+			https://developer.github.com/v3/repos/hooks/#get-single-hook
+	if method is 'POST':
+		https://developer.github.com/v3/repos/hooks/#create-a-hook
+	if method is 'PATCH':
+		https://developer.github.com/v3/repos/hooks/#edit-a-hook
+	else:
+		https://developer.github.com/v3/repos/hooks/#delete-a-hook
+	'''
+	def repos_hooks(self, owner, repo, id=None, method='GET', **kwargs):
+		if method not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/hooks'
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + str(id), self._auth)
+		if method is 'POST' or method is 'PATCH':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			if method is 'PATCH':
+				return r.Request.patch(url_rem + '/' + str(id), payload, self._auth)
+			return r.Request.post(url_rem, payload, self._auth)
+		return r.Request.get(url_rem, self._auth) if id is None else r.Request.get(url_rem + '/' + str(id), self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/hooks/#test-a-push-hook
+	'''
+	def repos_hooks_tests(self, owner, repo, id):
+		return r.Request.post('repos/' + owner + '/' + repo + '/hooks/' + str(id) + '/tests', None, self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/hooks/#ping-a-hook
+	'''
+	def repos_hooks_pings(self, owner, repo, id):
+		return r.Request.post('repos/' + owner + '/' + repo + '/hooks/' + str(id) + '/pings', None, self._auth)
+
+
+	'''
+	https://developer.github.com/v3/repos/merging/#perform-a-merge
+	'''
+	def repos_merges(self, owner, repo, **kwargs):
+		if 'base' not in kwargs or 'head' not in kwargs:
+			print 'ERROR: base and head are required when performing a merge'
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/merges'
+		payload = {}
+		for arg in kwargs:
+			payload[arg] = kwargs[arg]
+		return r.Request.post(url_rem, payload, self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/pages/#get-information-about-a-pages-site
+	'''
+	def repos_pages(self, owner, repo):
+		return r.Request.get('repos/' + owner + '/' + repo + '/pages', self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/pages/#list-pages-builds
+	'''
+	def repos_pages_builds(self, owner, repo):
+		return r.Request.get('repos/' + owner + '/' + repo + '/pages/builds', self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/pages/#list-latest-pages-build
+	'''
+	def repos_pages_builds_latest(self, owner, repo):
+		return r.Request.get('repos/' + owner + '/' + repo + '/pages/builds/latest', self._auth)
+
+	'''
+	if method is 'GET':
+		if id is None:
+		https://developer.github.com/v3/repos/releases/#list-releases-for-a-repository
+	if method is 'PATCH':
+		https://developer.github.com/v3/repos/releases/#edit-a-release
+	if method is 'POST':
+		https://developer.github.com/v3/repos/releases/#create-a-release
+	else:
+		https://developer.github.com/v3/repos/releases/#delete-a-release
+	'''
+	def repos_releases(self, owner, repo, id=None, method='GET', **kwargs):
+		if method not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/releases'
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + str(id), self._auth)
+		if method is 'GET':
+			return r.Request.get(url_rem, self._auth) if id is None else r.Request.get(url_rem + '/' + str(id), self._auth)
+		payload = {}
+		for arg in kwargs:
+			payload[arg] = kwargs[arg]
+		if method is 'POST':
+			if 'tag_name' not in kwargs:
+				print 'ERROR: tag_name is requied when creating a release'
+				return
+			return r.Request.post(url_rem, payload, self._auth)
+		return r.Request.patch(url_rem + '/' + str(id), payload, self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/releases/#list-assets-for-a-release
+	'''
+	def repos_releases_assets(self, owner, repo, id):
+		return r.Request.get('repos/' + owner + '/' + repo + '/releases/' + str(id) + '/assets', self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/statistics/#contributors
+	'''
+	def repos_stats_contributors(self, owner, repo):
+		return r.Request.get('repos/' + owner + '/' + repo + '/stats/contributors', self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/statistics/#commit-activity
+	'''
+	def repos_stats_commit_activity(self, owner, repo):
+		return r.Request.get('repos/' + owner + '/' + repo + '/stats/commit_activity', self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/statistics/#code-frequency
+	'''
+	def repos_stats_code_frequency(self, owner, repo):
+		return r.Request.get('repos/' + owner + '/' + repo + '/stats/code_frequency', self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/statistics/#participation
+	'''
+	def repos_stats_participation(self, owner, repo):
+		return r.Request.get('repos/' + owner + '/' + repo + '/stats/participation', self._auth)	
+
+	'''
+	https://developer.github.com/v3/repos/statistics/#punch-card
+	'''
+	def repos_stats_punch_card(self, owner, repo):
+		return r.Request.get('repos/' + owner + '/' + repo + '/stats/punch_card', self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/statuses/#create-a-status
+	'''
+	def repos_statuses(self, owner, repo, sha, **kwargs):
+		if 'state' not in kwargs:
+			print 'ERROR: state is required when creating a status'
+			return
+		payload = {}
+		for arg in kwargs:
+			payload[arg] = kwargs[arg]
+		return r.Request.post('repos/' + owner + '/' + repo + '/statuses/' + sha, payload, self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/statuses/#list-statuses-for-a-specific-ref
+	'''	
+	def repos_commits_statuses(self, owner, repo, ref, **kwargs):
+		url_rem = 'repos/' + owner + '/' + repo + '/commits/' + ref + '/statuses'
+		params = {}
+		for arg in kwargs:
+			params[arg] = kwargs[arg]
+		return r.Request.get_with_params(url_rem, params, self._auth)
+
+	'''
+	https://developer.github.com/v3/repos/statuses/#get-the-combined-status-for-a-specific-ref
+	'''
+	def repos_commits_status(self, owner, repo, ref, **kwargs):
+		url_rem = 'repos/' + owner + '/' + repo + '/commits/' + ref + '/status'
+		params = {}
+		for arg in kwargs:
+			params[arg] = kwargs[arg]
+		return r.Request.get_with_params(url_rem, params, self._auth)
+
 
 	###########
 	##EVENTS###
@@ -282,7 +616,7 @@ class Api(object):
 		for arg in kwargs:
 			payload[arg] = kwargs[arg]
 		if method is 'PUT':
-			return r.Request.put('notifications', payload, None, self._auth) if len(payload) > 0 else r.Request.put('notifications', None, { 'Content-Length' : None}, self._auth)
+			return r.Request.put('notifications', payload, None, self._auth) if len(payload) > 0 else r.Request.put('notifications', None, { 'Content-Length' : 0 }, self._auth)
 		return r.Request.get_with_params('notifications', payload, self._auth) if len(payload) > 0 else r.Request.get('notifications', self._auth)
 
 	'''
@@ -456,16 +790,7 @@ class Api(object):
 	if method is 'DELETE':
 		https://developer.github.com/v3/gists/#delete-a-gist
 	'''
-	def gists(self, \
-				user, \
-				method='GET', \
-				_id=None, \
-				since=None, \
-				files=None, \
-				description=None, \
-				public=None, \
-				content=None, \
-				filename=None):
+	def gists(self, user, method='GET', **kwargs):
 		if method not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'POST\' or \'PATCH\''
@@ -547,7 +872,7 @@ class Api(object):
 		https://developer.github.com/v3/gists/comments/#delete-a-comment
 	'''
 	def gists_comments(self, gist_id, method='GET', **kwargs):
-		if method is not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
+		if method not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'POST\' or \'PATCH\' or \'DELETE\''
 			return
@@ -639,7 +964,7 @@ class Api(object):
 		https://developer.github.com/v3/git/refs/#delete-a-reference
 	'''
 	def repos_git_refs(self, owner, repo, ref=None, method='GET', **kwargs):
-		if method is not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
+		if method not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
 			print 'ERROR: invalid method parameter:' + str(method)
 			print 'method must be \'GET\' (default) or \'POST\' or \'PATCH\' or \'DELETE\''
 			return
@@ -671,7 +996,7 @@ class Api(object):
 			print 'method must be \'GET\' (default) or \'POST\''
 			return
 		url_rem = 'repos/' + owner + '/' + repo + '/git/tags'
-		if method is 'POST:'
+		if method is 'POST':
 			payload = {}
 			for arg in kwargs:
 				payload[arg] = kwargs[arg]
@@ -751,10 +1076,6 @@ class Api(object):
 			return r.Request.post(url_rem, payload, self._auth)
 		return r.Request.patch(url_rem + '/' + str(number), payload, self._auth)
 
-	###########
-	#ASSIGNEES#
-	###########
-
 	'''
 	if 'assignees':
 		https://developer.github.com/v3/issues/assignees/#list-assignees
@@ -764,11 +1085,6 @@ class Api(object):
 	def repos_assignees(self, owner, repo, assignee=None):
 		url_rem = 'repos/' + owner + '/'  + repo + '/assignees'
 		return r.Request.get(url_rem + '/' + assignee, self._auth) if assignee is not None else r.Request.get(url_rem, self._auth)
-
-
-	##########
-	#COMMENTS#
-	##########
 
 	'''
 	if method is 'GET':
@@ -803,10 +1119,6 @@ class Api(object):
 		if method is 'PATCH':
 			return r.Request.patch(url_rem + '/comments/' + str(id), payload, self._auth)
 
-	##########
-	##EVENTS##
-	##########
-
 	'''
 	if issue_number is not None:
 		https://developer.github.com/v3/issues/events/#list-events-for-an-issue
@@ -823,10 +1135,6 @@ class Api(object):
 			return r.Request.get(url_rem + '/events/' + str(id), self._auth)
 		return r.Request.get(url_rem + '/events', self._auth)
 
-	##########
-	##LABELS##
-	##########
-
 	'''
 	https://developer.github.com/v3/issues/labels/
 	'''
@@ -837,7 +1145,7 @@ class Api(object):
 			return
 		url_rem = 'repos/' + owner + '/'  + repo + '/labels'
 		if method is 'GET':
-			return r.Request.get(url_rem, self._auth) is name is None else r.Request.get(url_rem + '/' + name, self._auth)
+			return r.Request.get(url_rem, self._auth) if name is None else r.Request.get(url_rem + '/' + name, self._auth)
 		if method is 'delete'.upper():
 			return r.Request.delete(url_rem + '/' + name, self._auth)
 		payload = {}
@@ -873,10 +1181,6 @@ class Api(object):
 	def repos_milestones_labels(self):
 		url_rem = 'repos/' + owner + '/' + repo + '/milestones/' + str(number) + '/labels'
 		return r.Request.get(url_rem, self._auth)
-
-	############
-	#MILESTONES#
-	############
 
 	'''
 	if method is 'GET':
@@ -965,18 +1269,248 @@ class Api(object):
 		return r.Request.get('rate_limit', self._auth)
 
 
+	###############
+	#ORGANIZATIONS#
+	###############
+
+	'''
+	https://developer.github.com/v3/orgs/#list-user-organizations
+	'''
+	def users_orgs(self, username=None):
+		if username is None:
+			return r.Request.get('users/' + username + '/orgs', self._auth)
+		return r.Request.get('users/orgs', self._auth)
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/orgs/#get-an-organization
+	else:
+		https://developer.github.com/v3/orgs/#edit-an-organization
+	'''
+	def orgs(self, org, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'PATCH':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PATCH\' '
+			return
+		url_rem = 'orgs/' + org
+		if method is 'PATCH':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			return r.Request.patch(url_rem, payload, self._auth)
+
+	'''
+	if method is 'GET':
+		if username is not None:
+			https://developer.github.com/v3/orgs/members/#check-membership
+		else:
+			https://developer.github.com/v3/orgs/members/#members-list
+	else:
+		https://developer.github.com/v3/orgs/members/#remove-a-member
+	'''
+	def orgs_members(self, org, username=None, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'DELETE\' '
+			return
+		url_rem = 'orgs/' + org + '/members'
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + username, self._auth)
+		params = {}
+		for arg in kwargs:
+			params[arg] = kwargs[arg]
+		return r.Request.get_with_params(url_rem, params, self._auth) if username is None else r.Request.get(url_rem + '/' + username, self._auth)
+
+	'''
+	if method is 'GET':
+		if username is None:
+			https://developer.github.com/v3/orgs/members/#public-members-list
+		else:
+			https://developer.github.com/v3/orgs/members/#check-public-membership
+	elif method is 'PUT':
+		https://developer.github.com/v3/orgs/members/#publicize-a-users-membership
+	else:
+		https://developer.github.com/v3/orgs/members/#conceal-a-users-membership
+	'''
+	def orgs_public_members(self, org, username=None, method='GET'):
+		if method is not 'GET' and method is not 'PUT' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' or  \'DELETE\' '
+			return
+		url_rem = 'orgs/' + org + '/public_members'
+		if method is 'PUT':
+			return r.Request.put(url_rem + '/' + username, None, { 'Content-Length' : 0 }, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + username, self._auth)
+		return r.Request.get(url_rem, self._auth) if username is None else r.Request.get(url_rem + '/' + username, self._auth)
 
 
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/orgs/teams/#list-teams
+	else:
+		https://developer.github.com/v3/orgs/teams/#create-team
+	'''
+	def orgs_teams(self, org, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'POST':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' '
+			return
+		url_rem = 'orgs/' + org + '/teams'
+		if method is 'POST':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			if 'name' not in kwargs:
+				print 'ERROR: name is required when creating a team'
+				return
+			return r.Request.post(url_rem, payload, self._auth)
+		return r.Request.get(url_rem, self._auth)
+
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/orgs/teams/#get-team
+	elif method is 'DELETE':
+		https://developer.github.com/v3/orgs/teams/#delete-team
+	else:
+		https://developer.github.com/v3/orgs/teams/#edit-team
+	'''
+	def teams(self, id, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'PATCH' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PATCH\' or \'DELETE\' '
+			return
+		url_rem = 'teams/' + str(id)
+		if method is 'PATCH':
+			if 'name' not in kwargs:
+				print 'ERROR: name is required when editing a team'
+				return
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			return r.Request.patch(url_rem, payload, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem, self._auth)
+		return r.Request.get(url_rem, self._auth)
+
+	'''
+	if method is 'GET':
+		if username is None:
+			https://developer.github.com/v3/orgs/teams/#list-team-members
+		else:
+			https://developer.github.com/v3/orgs/teams/#get-team-member
+	elif method is 'PUT':
+		https://developer.github.com/v3/orgs/teams/#add-team-member
+	else:
+		https://developer.github.com/v3/orgs/teams/#remove-team-member
+	'''
+	def teams_members(self, id, username=None, method='GET'):
+		if method is not 'GET' and method is not 'PUT' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' or \'DELETE\''
+			return
+		url_rem = 'teams/' + str(id) + '/members'	
+		if method is 'PUT':
+			return r.Request.put(url_rem + '/' + username, None, { 'Content-Length' : 0 }, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + username, self._auth)
+		return r.Request.get(url_rem, self._auth) if username is None else r.Request.get(url_rem + '/' + username, self._auth)
+
+	###############
+	#PULL-REQUESTS#
+	###############
+
+	'''
+	if method is 'GET':
+		if number is None:
+			https://developer.github.com/v3/pulls/#link-relations
+		else:
+			https://developer.github.com/v3/pulls/#get-a-single-pull-request
+	elif method is 'POST':
+		https://developer.github.com/v3/pulls/#create-a-pull-request
+	else:
+		https://developer.github.com/v3/pulls/#update-a-pull-request
+	'''
+	def repos_pulls(self, owner, repo, number=None, method='GET', **kwargs):
+		if method not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1 }:
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' or \'PATCH\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/pulls' 
+		payload = {}
+		for arg in kwargs:
+			payload[arg] = kwargs[arg]	
+		if method is 'POST':
+			return r.Request.post(url_rem, payload, self._auth)
+		if method is 'PATCH':
+			return r.Request.patch(url_rem + '/' + str(number), payload, self._auth)
+		return r.Request.get_with_params(url_rem, payload, self._auth) if number is None else r.Request.get(url_rem + '/' + str(number), self._auth)
 
 
+	'''
+	https://developer.github.com/v3/pulls/#list-pull-requests-files
+	'''
+	def repos_pulls_files(self, owner, repo, number):
+		return r.Request.get('repos/' + owner + '/' + repo + '/pulls/' + str(number) + '/files', self._auth)
 
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/pulls/#get-if-a-pull-request-has-been-merged
+	else:
+		https://developer.github.com/v3/pulls/#merge-a-pull-request-merge-button
+	'''
+	def repos_pulls_merge(self, owner, repo, number, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'PUT':
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/pulls/' + str(number) + '/merge'
+		if method is 'PUT':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]	
+			return r.Request.put(url_rem, payload, None, self._auth) if len(payload) > 0 else r.Request.put(url_rem, None, { 'Content-Length' : 0 }, self._auth)
+		return r.Request.get(url_rem, self._auth)
 
+	'''
+	if method is 'GET':
+		if number is None:
+			https://developer.github.com/v3/pulls/comments/#list-comments-on-a-pull-request
+		else:
+			https://developer.github.com/v3/pulls/comments/#list-comments-in-a-repository
+	if method is 'DELETE':
+		https://developer.github.com/v3/pulls/comments/#delete-a-comment
+	if method is 'POST':
+		https://developer.github.com/v3/pulls/comments/#create-a-comment
+	else:
+		https://developer.github.com/v3/pulls/comments/#edit-a-comment
+	'''
+	def repos_pulls_comments(self, owner, repo, number=None, method='GET', **kwargs):
+		if method not in { 'GET' : 1, 'POST' : 1, 'PATCH' : 1, 'delete'.upper() : 1 }:
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' or \'PATCH\' or \'DELETE\''
+			return
+		url_rem = 'repos/' + owner + '/' + repo + '/pulls'
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/comments/' + str(number), self._auth)
+		payload = {}
+		for arg in kwargs:
+			payload[arg] = kwargs[arg]	
+		if method is 'POST':
+			return r.Request.post(url_rem + '/' + str(number) + '/comments', payload, self._auth)
+		if method is 'PATCH':
+			return r.Request.patch(url_rem + '/comments/' + str(number), payload, self._auth)
+		if number is None:
+			return r.Request.get_with_params(url_rem + '/comments', payload, self._auth) 
+		return r.Request.get(url_rem + '/' + str(number) + '/comments', self._auth)
 
-
-
-
-
-
+	'''
+	This is the only function that doesn't conform to the naming conventions of this class
+	because it is the only one that is truly ambiguous (i.e. it has the same signature as another)
+	https://developer.github.com/v3/pulls/comments/#get-a-single-comment
+	'''
+	def repo_pulls_comment(self, owner, repo, number):
+		return r.Request.get('repos/' + owner + '/' + repo + '/pulls/comments/' + str(number), self._auth)
 
 
 
