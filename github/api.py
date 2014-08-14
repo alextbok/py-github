@@ -56,6 +56,106 @@ class Api(object):
 			return r.Request.patch('user', payload, self._auth)
 		return r.Request.get('user', self._auth)
 
+	'''
+	if method is 'GET':
+		https://developer.github.com/v3/users/emails/#list-email-addresses-for-a-user
+	if method is 'POST':
+		https://developer.github.com/v3/users/emails/#add-email-addresses
+	if method is 'DELETE':
+		https://developer.github.com/v3/users/emails/#delete-email-addresses
+	'''
+	def user_emails(self, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'POST' and method is 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' or \'DELETE\''
+			return	
+		url_rem = 'user/emails'
+		if method is 'GET':
+			return r.Request.get(url_rem, self._auth)
+		payload = {}
+		for arg in kwargs:
+			payload[arg] = kwargs[arg]
+		if method is 'POST':
+			return r.Request.post(url_rem, payload, self._auth)
+		return r.Request.delete(url_rem, data=payload, auth=self._auth)
+
+	'''
+	https://developer.github.com/v3/users/followers/#list-followers-of-a-user
+	'''
+	def users_followers(self, username):
+		return r.Request.get('users/' + username + '/followers', self._auth)
+
+	'''
+	https://developer.github.com/v3/users/followers/#list-followers-of-a-user
+	'''
+	def user_followers(self):
+		return r.Request.get('user/followers', self._auth)
+
+	'''
+	if target_user is None:
+		https://developer.github.com/v3/users/followers/#list-users-followed-by-another-user
+	else:
+		https://developer.github.com/v3/users/followers/#check-if-one-user-follows-another
+	'''
+	def users_following(self, username, target_user=None):
+		url_rem = 'users/' + username + '/following'
+		return r.Request.get(url_rem, self._auth) if target_user is None else r.Request.get(url_rem + '/' + target_user, self._auth)
+
+
+	'''
+	if method is 'GET':
+		if username is None:
+			https://developer.github.com/v3/users/followers/#list-users-followed-by-another-user
+		else:
+			https://developer.github.com/v3/users/followers/#check-if-you-are-following-a-user
+	if method is 'PUT':
+		https://developer.github.com/v3/users/followers/#follow-a-user
+	if method is 'DELETE':
+		https://developer.github.com/v3/users/followers/#unfollow-a-user
+	'''
+	def user_following(self, username=None, method='GET'):
+		if method is not 'GET' and method is not 'PUT' and method is 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'PUT\' or \'DELETE\''
+			return
+		url_rem = 'user/following'
+		if method is 'PUT':
+			return r.Request.put(url_rem + '/' + username, None, { 'Content-Length' : 0 }, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + username, self._auth)
+		return r.Request.get(url_rem + '/' + username, self._auth) if username is not None else r.Request.get(url_rem, self._auth)
+	'''
+	https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user
+	'''
+	def users_keys(self, username):
+		return r.Request.get('users/' + username + '/keys', self._auth)
+
+	'''
+	if method is 'GET':
+		if id is None:
+			https://developer.github.com/v3/users/keys/#list-your-public-keys
+		else:
+			https://developer.github.com/v3/users/keys/#get-a-single-public-key
+	if method is 'POST':
+		https://developer.github.com/v3/users/keys/#create-a-public-key
+	if method is 'DELETE':
+		https://developer.github.com/v3/users/keys/#delete-a-public-key
+	'''
+	def user_keys(self, id=None, method='GET', **kwargs):
+		if method is not 'GET' and method is not 'POST' and method is not 'delete'.upper():
+			print 'ERROR: invalid method parameter:' + str(method)
+			print 'method must be \'GET\' (default) or \'POST\' or \'DELETE\''
+			return
+		url_rem = 'users/keys'
+		if method is 'POST':
+			payload = {}
+			for arg in kwargs:
+				payload[arg] = kwargs[arg]
+			return r.Request.post(url_rem, payload, self._auth)
+		if method is 'delete'.upper():
+			return r.Request.delete(url_rem + '/' + str(id), self._auth)
+		return r.Request.get(url_rem, self._auth) if id is None else r.Request.get(url_rem + '/' + str(id), self._auth)
+
 	##################
 	###REPOSITORIES###
 	##################

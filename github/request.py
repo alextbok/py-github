@@ -57,7 +57,15 @@ class Request():
 	@staticmethod
 	def delete(url_remainder, auth=None):
 		url = GITHUB_API_BASE_URL + url_remainder
-		return requests.delete(url, auth=auth) if auth else requests.delete(url)
+		return requests.delete(url, auth=auth) if auth is not None else requests.delete(url)
+
+	'''
+	DELETE (with params)
+	'''
+	@staticmethod
+	def delete_with_data(url_remainder, data, auth=None):
+		url = GITHUB_API_BASE_URL + url_remainder
+		return requests.delete(url, data=data, auth=auth) if auth is not None else requests.delete(url, data=data)
 
 	'''
 	PUT
