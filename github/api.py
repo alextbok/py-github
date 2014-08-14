@@ -1612,12 +1612,45 @@ class Api(object):
 	def repo_pulls_comment(self, owner, repo, number):
 		return r.Request.get('repos/' + owner + '/' + repo + '/pulls/comments/' + str(number), self._auth)
 
+	##########
+	##SEARCH##
+	##########
 
+	'''
+	https://developer.github.com/v3/search/#search-repositories
+	'''
+	def search_repositories(self, **kwargs):
+		params = {}
+		for arg in kwargs:
+			params[arg] = kwargs[arg]
+		return r.Request.get_with_params('search/repositories', params, self._auth)
 
+	'''
+	https://developer.github.com/v3/search/#search-code
+	'''
+	def search_code(self, **kwargs):
+		params = {}
+		for arg in kwargs:
+			params[arg] = kwargs[arg]
+		return r.Request.get_with_params('search/code', params, self._auth)
 
+	'''
+	https://developer.github.com/v3/search/#search-issues
+	'''
+	def search_issues(self, **kwargs):
+		params = {}
+		for arg in kwargs:
+			params[arg] = kwargs[arg]
+		return r.Request.get_with_params('search/issues', params, self._auth)
 
-
-
+	'''
+	https://developer.github.com/v3/search/#search-users
+	'''
+	def search_users(self, **kwargs):
+		params = {}
+		for arg in kwargs:
+			params[arg] = kwargs[arg]
+		return r.Request.get_with_params('search/users', params, self._auth)
 
 
 
