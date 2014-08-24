@@ -66,7 +66,8 @@ To make this call with py-github for **alextbok/py-github**:
     >>> api_obj.repos_contributors(alextbok, py-github)
 ```
 
-**A note on responses**
+**A note on responses**:
+
 Responses are returned as [Python Requests](http://docs.python-requests.org/en/latest/) response objects. Retrieving the header and body of the request is as easy as
 ```
     >>> res = api_obj.user_repos()
