@@ -23,7 +23,7 @@ Check out the latest version:
 - [Python Requests](http://docs.python-requests.org/en/latest/)
 
 
-Using
+Use
 =========
 Access to the API starts with an Api object. Once created, you can make any authenticated (or unauthenticated) call available by the GitHub API. Be sure to sign up for the [GitHub Developer Program](https://developer.github.com/program/)
 ```
