@@ -25,16 +25,18 @@ Dependencies
 Using
 =========
 Access to the API starts with an Api object. Once created, you can make any authenticated (or unauthenticated) call available by the GitHub API. Be sure to sign up for the [GitHub Developer Program](https://developer.github.com/program/)
+::
     >>> from github import api
     >>> api_obj = api.Api(<your github username>, <your github password>)
 Every function signature directly corresponds to an end point of the GitHubAPI.
 Simply replace all forward slashes '/' in the url endpoint with underbars '_'. 
 For example, to [list your repositories](https://developer.github.com/v3/repos/#list-your-repositories), the endpoint is https://api.github.com/user/repos. 
 To make this call with py-github
+```
     >>> from github import api
     >>> api_obj = api.Api(<username>,<password>)
     >>> api`_obj.user_`repos()
-
+```
 You may have noticed that end points sometimes have multiple verb possibilites. In this case, use the keyword argument
 'method' to delineate the request you want to make. The 'GET' verb is always the default, so it's unnecessary to include this in the function call.
 For example, to [create a new repo](https://developer.github.com/v3/repos/#create), the new signature is::
