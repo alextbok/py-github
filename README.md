@@ -48,7 +48,7 @@ You may have noticed that end points sometimes have multiple verb possibilites.
 
 In this case, use the keyword argument **method** to delineate the type request you want to make. 
 
-The 'GET' verb is always the default, so it's unnecessary to include this in the function call.
+The **GET** verb is always the default, so it's unnecessary to include this in the function call.
 For example, to [create a new repo](https://developer.github.com/v3/repos/#create), the new signature is
 ```
     >>> api_obj.user_repos(method='POST', name='foo', description='bar')
@@ -68,7 +68,7 @@ To make this call with py-github for **alextbok/py-github**:
 
 **A note on responses**:
 
-Responses are returned as [Python Requests](http://docs.python-requests.org/en/latest/) response objects. Retrieving the header and body of the request is as easy as
+Responses are returned as [Python Requests](http://docs.python-requests.org/en/latest/) response objects. To retrieve the header and body of the request
 ```
     >>> res = api_obj.user_repos()
     >>> res.json()
