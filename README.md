@@ -48,11 +48,13 @@ You may have noticed that end points sometimes have multiple verb possibilites.
 
 In this case, use the keyword argument **method** to delineate the type request you want to make. 
 
-The **GET** verb is always the default, so it's unnecessary to include this in the function call.
 For example, to [create a new repo](https://developer.github.com/v3/repos/#create), the new signature is
 ```
     >>> api_obj.user_repos(method='POST', name='foo', description='bar')
 ```
+
+(The **GET** verb is always the default, so it's unnecessary to include this in any **GET** request function call)
+
 Any parameters in the **POST** request should be included as keyword arguments.
 
 Arguments that are required by GitHub are also required by py-github (i.e. it will yell at you if you try creating a repo without a name).
